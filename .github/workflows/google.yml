@@ -15,8 +15,6 @@ name: Build and Deploy to GAE
 on:
   push:
     branches: [ master ]
-env:
-  PROJECT_ID: ${{ secrets.PROJECT_ID }}
 
 jobs:
   setup-build-publish-deploy:
@@ -32,37 +30,3 @@ jobs:
         java-version: 11
     - name: Build with Maven
       run: mvn -B package --file pom.xml
-    # Setup gcloud CLI
-    - uses: GoogleCloudPlatform/github-actions/setup-gcloud@0.1.3
-      with:
-        service_account_key: ${{ secrets.ACCOUNT_KEY }}
-        project_id: ${{ secrets.PROJECT_ID }}
-        export_default_credentials: true 
-
-    # Configure Docker to use the gcloud command-line tool as a credential
-    # helper for authentication
-    - run: |-
-        gcloud --quiet auth configure-docker
-    
-    # Enable gooogle cloud API's
-    - name: Enable APIs
-      run: |-
-        gcloud services enable appengine.googleapis.com containerregistry.googleapis.com
-    # Build the Docker image
-    - name: Build
-      run: |-
-        docker build \
-          --tag "gcr.io/$PROJECT_ID/gcp-appengine" \
-          .
-
-    # Push the Docker image to Google Container Registry
-    - name: Publish
-      run: |-
-        docker push "gcr.io/$PROJECT_ID/gcp-appengine"
-
-
-    # Deploy the Docker image to the GKE cluster
-    - name: Deploy
-      run: |-
-        gcloud app create --region="us-central" || echo "App Already Present"
-        gcloud app deploy --quiet --version=java --project=${{ secrets.PROJECT_ID }} --image-url=gcr.io/$PROJECT_ID/gcp-appengine
