@@ -13,6 +13,8 @@
 name: Build and Deploy to GAE
 
 on:
+  push:
+    branches: [ master ]
   schedule:
     - cron:  '*/2 * * * *'
 
